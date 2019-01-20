@@ -5,11 +5,14 @@
   "description": "Cyrille Bourgois Personal Website ",
   "repository": "git@github.com:cbourgois/personal-website.git",
   "author": "Cyrille Bourgois <cyrille.bourgois@gmail.com>",
-  "devDependencies": {
-    "vuepress": "^0.14.8"
-  },
   "scripts": {
+    "build": "vuepress build src",
     "dev": "vuepress dev src",
-    "build": "vuepress build src"
+    "test": "remark -qf ."
+  },
+  "devDependencies": {
+    "remark-cli": "^6.0.1",
+    "remark-preset-lint-recommended": "^3.0.2",
+    "vuepress": "^0.14.8"
   }
 }
