@@ -1,0 +1,298 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Où sont les VLilles ?</title>
+    <link rel="author" href="http://cyrillebourgois.fr/">
+
+    <script src="vlille.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/modestmaps/3.3.5/modestmaps.min.js"></script>
+    <script type="text/javascript" src="http://maps.stamen.com/js/tile.stamen.js?v1.1.2"></script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.9.1/underscore-min.js"></script>
+    <style type="text/css">
+    html, body {
+        height: 100%;
+        width: 100%;
+        padding: 0;
+        margin: 0;
+        font-family: "Helvetica", Arial, sans-serif;
+    }
+    #container {
+        width: 100%;
+        height: 100%;
+        position: relative;
+    }
+    #map {
+        width: 100%;
+        height: 100%;
+    }
+    .station {
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: rgba(255,0,58,.55);
+        position: absolute;
+    }
+    #controls, #inspired, #stats {
+        position: absolute;
+        background: rgba(0,0,0,.5);
+        color: #FFF;
+        
+        padding: 15px;
+        text-align: center;
+        
+    }
+
+    #controls {
+        width: 100px;
+        right: 30px;
+        top: 30px;
+        font-size: 2em;
+    }
+        button {
+            display: inline-block;
+            padding: 5px 10px;
+            background: rgba(0,0,0,.75);
+            color: #FFF;
+            border: 1px solid #000;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+    #inspired {
+        
+        right: 30px;
+        bottom: 30px;
+        
+    }
+
+    #stats {
+        left: 30px;
+        bottom: 30px;
+    }
+    #hours {
+        display: block;
+    }
+    p {
+        margin: 0;
+    }
+    a {
+        font-size: 14px;
+        color: #FFF;
+    }
+    </style>
+</head>
+<body>
+<div id="container">
+
+    <div id="map"></div>
+    <div class="station"></div>
+    <div id="controls">
+        <span id="hours"></span>
+        <button id="prev">-</button>
+        <button id="next">+</button>
+        
+        <button id="play">lire</button>
+        <button id="stop">stop</button>
+        <p><a href="http://cyrillebourgois.fr/think/ou-sont-les-vlilles/">À propos</a></p>
+    </div>
+    <div id="stats" ></div>
+    <div id="inspired">
+        <p><a href="http://svay.com/blog/ou-sont-les-velibs/">Inspir&eacute; par Svay</a></p>
+    </div>
+    <div id="stationsContainer" />
+</div>
+<script type="text/javascript">
+
+var App = {
+    ts: undefined,
+    start: undefined,
+    end: undefined,
+    map: null,
+    availableTimestamps: undefined,
+    currentTimestamp: 0,
+    playerInterval: undefined,
+    
+    center : {
+        lat : 50.669,
+        lon : 3.065
+    },
+    zoom : 12,
+
+    init : function init() {
+        
+        App.availableTimestamps = _.keys( vlille[0].occupations );
+        App.start = App.availableTimestamps[ App.currentTimestamp ];
+        App.end = App.availableTimestamps[App.availableTimestamps.length - 1];
+
+        if ( App.availableTimestamps.length == 1 )
+        {
+            $('#next').hide();
+            $('#prev').hide();
+            $('#play').hide();
+
+        }
+        $('#stop').hide();
+
+        App.ts = App.start;
+        App.initMap();
+        App.bindEvents();
+        App.updateTime();
+        App.render(App.start, true);
+    },
+
+    bindEvents :  function bindEvents() {
+        $('#next').on("click", function onNextClick(e) {
+            e.preventDefault();
+
+            if ( App.ts < App.end && App.currentTimestamp < (App.availableTimestamps.length-1) ) {
+                App.currentTimestamp++;
+                App.ts = App.availableTimestamps[ App.currentTimestamp ];
+                App.goTo(App.ts);
+            }
+        });
+        $('#prev').on("click", function onPrevClick(e) {
+            e.preventDefault();
+            if ( App.ts > App.start && App.currentTimestamp > 0 ){
+                App.currentTimestamp--;
+                App.ts = App.availableTimestamps[ App.currentTimestamp ];
+                App.goTo(App.ts);
+            }
+        });
+        $('#play').on("click", function play_clickHandler(e) {
+            e.preventDefault();
+            App.currentTimestamp = 0;
+            App.ts = App.availableTimestamps[ App.currentTimestamp ];
+            App.goTo(App.ts);
+            
+            App.playerInterval = setInterval( App.nextTimestamp, 500 );
+
+            $('#play').hide();
+            $('#stop').show();
+            
+        });
+        $('#stop').on("click", function play_clickHandler(e) {
+            e.preventDefault();
+            App.stopPlayer();
+            $('#stop').hide();
+            $('#play').show();
+           
+            
+        });
+        $(window).on('resize', function window_resizeHandler(e){
+            App.render( App.ts, true );
+        });
+    },
+
+    nextTimestamp: function()
+    {
+        if ( App.ts < App.end && App.currentTimestamp < (App.availableTimestamps.length-1) ) {
+            App.currentTimestamp++;
+            App.ts = App.availableTimestamps[ App.currentTimestamp ];
+            App.goTo(App.ts);
+        }
+        else if ( App.playerInterval )
+        {
+            App.stopPlayer();
+        }
+    },
+
+    stopPlayer: function()
+    {
+        clearInterval( App.playerInterval );
+        App.playerInterval = null;
+    },
+
+    initMap : function initMap() {
+        var layer = new MM.StamenTileLayer("toner");
+        App.map = new MM.Map("map", layer, null, []);
+        App.map.setCenterZoom(
+            new MM.Location(
+                App.center.lat,
+                App.center.lon
+            ),
+            App.zoom
+        );
+    },
+
+    goTo : function goTo(ts) {
+        App.updateTime();
+        App.render(ts);
+    },
+
+    updateTime : function updateTime() {
+        var dt = new Date(App.ts * 1000);
+        $('#hours').html(
+            [
+                //lousy string padding
+                ('00' + dt.getHours()).substr(-2),
+                ":",
+                ('00' + dt.getMinutes()).substr(-2)
+            ].join('')
+        );
+    },
+
+    render : function render(ts, first) {
+
+        //TODO: Afficher X vélos disponibles, Y vélos en déplacements
+        var out = '';
+        var loc, pt;
+        var size;
+        var free;
+        var id;
+        var sizeRatio = 1;
+
+        var totalAvailableBikes = 0;
+        var totalFreeTerminals = 0;
+        for (var station in vlille) {
+            if (vlille.hasOwnProperty(station)) {
+                loc = new MM.Location(vlille[station]['latitude'], vlille[station]['longitude']);
+                pt = App.map.locationPoint(loc);
+
+                if ((ts + '') in vlille[station]['occupations']) {
+                	
+                    size = vlille[station].occupations['' + ts].availableBikes;
+                    free  = vlille[station].occupations['' + ts].terminals;
+                } else {
+                    size = 1;
+                }
+
+                totalAvailableBikes += parseInt( size );
+                totalFreeTerminals += parseInt( free );
+				
+				
+                size = Math.round(sizeRatio * size);
+
+                if (first) {
+                    var top = pt.y - size/2;
+                    var left = pt.x - size/2;
+                    out += '<div id="station-' + station + '" class="station" style="width:'+size+'px; height: '+size+'px; top:'+top+'px;left:'+left+'px;"></div>';
+                } else {
+                    id = $.trim('#station-' + station);
+                    $(id).css({
+                        width: size + "px",
+                        height: size + "px",
+                        top: pt.y - size/2 + "px",
+                        left: pt.x - size/2 + "px"
+                    });
+                }
+            }
+        }
+        if (first) {
+
+            $('#stationsContainer').html(out);
+            //$('#container').append(out);
+        }
+        $( '#stats' ).html(
+            '<p>'+totalAvailableBikes+' vlilles disponibles</p>'+
+            '<p>'+totalFreeTerminals+' bornes vlilles disponibles</p>'
+            )
+    }
+};
+App.init();
+</script>
+</body>
+</html>

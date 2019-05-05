@@ -13,7 +13,7 @@ module.exports = {
     }
   },
   themeConfig: {
-    cover: 'https://source.unsplash.com/random',
+    // cover: 'https://source.unsplash.com/random?orientation=landscape&featured=1',
     // logo: '/me.png',`
     nav: [
       {
@@ -29,8 +29,8 @@ module.exports = {
         link: '/category/code'
       },
       {
-        text: 'Page',
-        link: '/a-page.html'
+        text: 'Resume',
+        link: '/resume.html'
       }
     ],
 
@@ -40,25 +40,22 @@ module.exports = {
         link: '/posts'
       },
       {
-        text: 'LinkedIn',
-        link: 'https://facebook.com/'
+        text: 'GitHub',
+        link: 'https://github.com/cbourgois'
       },
       {
         text: 'Twitter',
         link: 'https://twitter.com/cyrillebourgois'
       },
       {
-        text: 'Github',
-        link: 'https://github.com/cbourgois'
-      }
+        text: 'LinkedIn',
+        link: 'https://fr.linkedin.com/in/cyrillebourgois'
+      },
     ],
     social: {
       github: 'https://github.com/cbourgois',
       twitter: 'https://twitter.com/cyrillebourgois',
-      // facebook: 'https://facebook.com',
-      // xing: 'https://xing.de',
-      // instagram: 'https://instagram.com',
-      linkedin: 'https://linkedin.com/'
+      linkedin: 'https://fr.linkedin.com/in/cyrillebourgois'
     }
   }
 };
