@@ -41,8 +41,8 @@ Il y aurait des navette chargés de circuler entre les stations afin de réparti
 ## Quelques chiffres sur la journée
 * 3560 bornes vlille au total
 * 1516 vlilles disponibles en moyenne
-    * 1597 au maximum
-    * 1379 au minimum
+  * 1597 au maximum
+  * 1379 au minimum
 
 ## Techniquement, qu'est-ce que c'est ?
 
